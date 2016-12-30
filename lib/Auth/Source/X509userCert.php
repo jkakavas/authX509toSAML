@@ -46,9 +46,12 @@ class sspmod_X509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Source 
 
 
     /**
-     * Validate certificate and login
+     * 
      *
-     * This function try to validate the certificate.
+     * The client ssl authentication is already performed in Apache. This method 
+     * maps the necessary attributes from the certificate to SAML attributes for
+     * the Attribute Statement of the SAML Assertion.
+     * .
      * On success, the user is logged in without going through
      * o login page.
      * On failure, The X509toSAML:X509error.php template is
@@ -79,6 +82,7 @@ class sspmod_X509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Source 
         }
         
         $attributes = array();
+        $attributes['mail'] = array();
         /**
          * Load values from configuration or fallback to defaults
          *
@@ -93,38 +97,72 @@ class sspmod_X509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Source 
         } else {
             $assertion_name_attribute = $config['assertion_name_attribute'];
         }
-
-
-        if (array_key_exists($cert_name_attribute, $client_cert_data['subject'])){
-            $attributes[$assertion_name_attribute] = array($client_cert_data['subject'][$cert_name_attribute]);
+        if (!array_key_exists('assertion_dn_attribute', $config)){
+            $assertion_dn_attribute = 'distinguishedName';
+        } else {
+            $assertion_dn_attribute = $config['assertion_dn_attribute'];
         }
+        if (!array_key_exists('assetion_assurance_attribute', $config)){
+            $assertion_assurance_attribute = 'eduPersonAssurance';
+        } else {
+            $assertion_assurance_attribute = $config['assertion_assurance_attribute'];
+        }
+        if (!array_key_exists('parseSANemais', $config)){
+            $parseSANemails = true;
+        } else {
+            $parseSANemails = $config['parseSANemails'];
+        }
+
+        // Get the subject of the certificate
         if (array_key_exists('name', $client_cert_data)){
-            $attributes['distinguishedName'] = array($client_cert_data['name']);
+            $attributes[$assertion_dn_attribute] = array($client_cert_data['name']);
             $state['UserID'] = $client_cert_data['name'];
         }
-        if (array_key_exists('subjectAltName', $client_cert_data['extensions'])){
-            if (is_string($client_cert_data['extensions']['subjectAltName']) && substr( $client_cert_data['extensions']['subjectAltName'], 0, 6 ) === "email:"){
-                $attributes['mail'] = array(str_replace('email:','',$client_cert_data['extensions']['subjectAltName']));
-            } 
-            else if (is_array($client_cert_data['extensions']['subjectAltName'])){
-                foreach ($client_cert_data['extensions']['subjectAltName'] as $subjectAltName){
-                    if (substr( $subjectAltName, 0, 6 ) === "email:"){
-                        $attributes['mail'] = array(str_replace('email:','',$subjectAltName)); 
+
+        if (array_key_exists($cert_name_attribute, $client_cert_data['subject'])){
+            if (array_key_exists('export_eppn', $config) && $config['export_eppn'] == true){
+                $name_tokens = explode(" ", $client_cert_data['subject'][$cert_name_attribute]);
+                $eppn = '';
+                foreach ($name_tokens as $token){
+                    if (strpos($token, '@') !== false){
+                        $attributes['eduPersonPrincipalName'] = array($token);
+                        $eppn = $token;
+                        break;
+                    }
+                }
+                // Now remove the eppn from the $assertion_name_attribute
+                $attributes[$assertion_name_attribute] = array(str_replace($eppn,'',$client_cert_data['subject'][$cert_name_attribute]));
+            } else {
+                $attributes[$assertion_name_attribute] = array($client_cert_data['subject'][$cert_name_attribute]);
+            }
+        }
+        // Attempt to parse Subject Alternate Names for email addresses
+        if ($parseSANemails){
+            if (array_key_exists('subjectAltName', $client_cert_data['extensions'])){
+                if (is_string($client_cert_data['extensions']['subjectAltName']) && substr( $client_cert_data['extensions']['subjectAltName'], 0, 6 ) === "email:"){
+                    $attributes['mail'][] = str_replace('email:','',$client_cert_data['extensions']['subjectAltName']);
+                } 
+                else if (is_array($client_cert_data['extensions']['subjectAltName'])){
+                    foreach ($client_cert_data['extensions']['subjectAltName'] as $subjectAltName){
+                        if (substr( $subjectAltName, 0, 6 ) === "email:"){
+                            $attributes['mail'][] = str_replace('email:','',$subjectAltName);
+                        }
                     }
                 }
             }
         }
+        // Attempt to parse certificatePolicies extensions to populate eduPersonAssurance
         if (!empty($client_cert_data['extensions']['certificatePolicies']) && is_string($client_cert_data['extensions']['certificatePolicies'])) {
-            SimpleSAML_Logger::debug("client_cert_data['extensions']['certificatePolicies']=" . var_export($client_cert_data['extensions']['certificatePolicies'], true));
-            $attributes['eduPersonAssurance'] = array();
+            $attributes[$assertion_assurance_attribute] = array();
             if (preg_match_all('/Policy: ([\d\.\d]+)/', $client_cert_data['extensions']['certificatePolicies'], $matches)) {
                 if (count($matches)>1){
                     foreach ($matches[1] as $policy){
-                        $attributes['eduPersonAssurance'][] = $policy;
+                        $attributes[$assertion_assurance_attribute] = $policy;
                     }
                 }
             }
         }
+
         assert('is_array($attributes)');
         $state['Attributes'] = $attributes;
         $this->authSuccesful($state);   
