@@ -5,9 +5,8 @@
  * translating the x509 certificate to a SAML Assertion
  *
  * @author Ioannis Kakavas <ikakavas@noc.grnet.gr>
- * @package SimpleSAMLphp
  */
-class sspmod_X509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Source {
+class sspmod_authX509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Source {
 
 
     /**
@@ -37,8 +36,8 @@ class sspmod_X509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Source 
         $config = SimpleSAML_Configuration::getInstance();
 
         $t = new SimpleSAML_XHTML_Template($config,
-            'X509toSAML:X509error.php');
-        $t->data['errorcode'] = $state['X509toSAML.error'];
+            'authX509toSAML:X509error.php');
+        $t->data['errorcode'] = $state['authX509toSAML.error'];
 
         $t->show();
         exit();
@@ -52,9 +51,8 @@ class sspmod_X509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Source 
      * maps the necessary attributes from the certificate to SAML attributes for
      * the Attribute Statement of the SAML Assertion.
      * .
-     * On success, the user is logged in without going through
-     * o login page.
-     * On failure, The X509toSAML:X509error.php template is
+     * On success, the user is logged in without going through the login page.
+     * On failure, The authX509toSAML:X509error.php template is
      * loaded.
      *
      * @param array &$state  Information about the current authentication.
@@ -64,7 +62,7 @@ class sspmod_X509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Source 
 
         if (!isset($_SERVER['SSL_CLIENT_CERT']) ||
             ($_SERVER['SSL_CLIENT_CERT'] == '')) {
-            $state['X509toSAML.error'] = "NOCERT";
+            $state['authX509toSAML.error'] = "NOCERT";
             $this->authFailed($state);
             assert('FALSE'); // NOTREACHED
             return;
@@ -73,8 +71,8 @@ class sspmod_X509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Source 
         $client_cert = $_SERVER['SSL_CLIENT_CERT'];
         $client_cert_data = openssl_x509_parse($client_cert);
         if ($client_cert_data == FALSE) {
-            SimpleSAML_Logger::error('X509toSAML: invalid cert');
-            $state['X509toSAML.error'] = "INVALIDCERT";
+            SimpleSAML_Logger::error('authX509toSAML: invalid cert');
+            $state['authX509toSAML.error'] = "INVALIDCERT";
             $this->authFailed($state);
 
             assert('FALSE'); // NOTREACHED
@@ -107,10 +105,15 @@ class sspmod_X509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Source 
         } else {
             $assertion_assurance_attribute = $config['assertion_assurance_attribute'];
         }
-        if (!array_key_exists('parseSANemais', $config)){
+        if (!array_key_exists('parseSANemails', $config)){
             $parseSANemails = true;
         } else {
             $parseSANemails = $config['parseSANemails'];
+        }
+        if (!array_key_exists('parsePolicy', $config)){
+            $parsePolicy = true;
+        } else {
+            $parsePolicy = $config['parsePolicy'];
         }
 
         // Get the subject of the certificate
@@ -151,13 +154,15 @@ class sspmod_X509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Source 
                 }
             }
         }
-        // Attempt to parse certificatePolicies extensions to populate eduPersonAssurance
-        if (!empty($client_cert_data['extensions']['certificatePolicies']) && is_string($client_cert_data['extensions']['certificatePolicies'])) {
-            $attributes[$assertion_assurance_attribute] = array();
-            if (preg_match_all('/Policy: ([\d\.\d]+)/', $client_cert_data['extensions']['certificatePolicies'], $matches)) {
-                if (count($matches)>1){
-                    foreach ($matches[1] as $policy){
-                        $attributes[$assertion_assurance_attribute] = $policy;
+        // Attempt to parse certificatePolicies extensions
+        if($parsePolicy){
+            if (!empty($client_cert_data['extensions']['certificatePolicies']) && is_string($client_cert_data['extensions']['certificatePolicies'])) {
+                $attributes[$assertion_assurance_attribute] = array();
+                if (preg_match_all('/Policy: ([\d\.\d]+)/', $client_cert_data['extensions']['certificatePolicies'], $matches)) {
+                    if (count($matches)>1){
+                        foreach ($matches[1] as $policy){
+                            $attributes[$assertion_assurance_attribute] = $policy;
+                        }
                     }
                 }
             }
