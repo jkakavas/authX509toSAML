@@ -116,7 +116,7 @@ class sspmod_authX509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Sou
             $parse_policy = $this->config['authX509toSAML:parse_policy'];
         }
         if (!array_key_exists('authX509toSAML:export_eppn', $this->config)){
-            $export_eppn = true;
+            $export_eppn = false;
         } else {
             $export_eppn = $this->config['authX509toSAML:export_eppn'];
         }
