@@ -8,7 +8,7 @@
  */
 class sspmod_authX509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Source {
 
-
+    private $config;
     /**
      * Constructor for this authentication source.
      *
@@ -22,6 +22,7 @@ class sspmod_authX509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Sou
         assert('is_array($info)');
         assert('is_array($config)');
         parent::__construct($info, $config);
+        $this->config = $config;
         return;
     }
     /**
@@ -80,40 +81,39 @@ class sspmod_authX509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Sou
         }
         
         $attributes = array();
-        $attributes['mail'] = array();
         /**
          * Load values from configuration or fallback to defaults
          *
          */
-        if (!array_key_exists('cert_name_attribute', $config)){
+        if (!array_key_exists('cert_name_attribute', $this->config)){
             $cert_name_attribute = 'CN';
         } else {
-            $cert_name_attribute = $config['cert_name_attribute'];
+            $cert_name_attribute = $this->config['cert_name_attribute'];
         }
-        if (!array_key_exists('assertion_name_attribute', $config)){
+        if (!array_key_exists('assertion_name_attribute', $this->config)){
             $assertion_name_attribute = 'displayName';
         } else {
-            $assertion_name_attribute = $config['assertion_name_attribute'];
+            $assertion_name_attribute = $this->config['assertion_name_attribute'];
         }
-        if (!array_key_exists('assertion_dn_attribute', $config)){
+        if (!array_key_exists('assertion_dn_attribute', $this->config)){
             $assertion_dn_attribute = 'distinguishedName';
         } else {
-            $assertion_dn_attribute = $config['assertion_dn_attribute'];
+            $assertion_dn_attribute = $this->config['assertion_dn_attribute'];
         }
-        if (!array_key_exists('assetion_assurance_attribute', $config)){
+        if (!array_key_exists('assetion_assurance_attribute', $this->config)){
             $assertion_assurance_attribute = 'eduPersonAssurance';
         } else {
-            $assertion_assurance_attribute = $config['assertion_assurance_attribute'];
+            $assertion_assurance_attribute = $this->config['assertion_assurance_attribute'];
         }
-        if (!array_key_exists('parseSANemails', $config)){
+        if (!array_key_exists('parseSANemails', $this->config)){
             $parseSANemails = true;
         } else {
-            $parseSANemails = $config['parseSANemails'];
+            $parseSANemails = $this->config['parseSANemails'];
         }
-        if (!array_key_exists('parsePolicy', $config)){
+        if (!array_key_exists('parsePolicy', $this->config)){
             $parsePolicy = true;
         } else {
-            $parsePolicy = $config['parsePolicy'];
+            $parsePolicy = $this->config['parsePolicy'];
         }
 
         // Get the subject of the certificate
@@ -123,7 +123,7 @@ class sspmod_authX509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Sou
         }
 
         if (array_key_exists($cert_name_attribute, $client_cert_data['subject'])){
-            if (array_key_exists('export_eppn', $config) && $config['export_eppn'] == true){
+            if (array_key_exists('export_eppn', $this->config) && $this->config['export_eppn'] == true){
                 $name_tokens = explode(" ", $client_cert_data['subject'][$cert_name_attribute]);
                 $eppn = '';
                 foreach ($name_tokens as $token){
@@ -141,6 +141,7 @@ class sspmod_authX509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Sou
         }
         // Attempt to parse Subject Alternate Names for email addresses
         if ($parseSANemails){
+            $attributes['mail'] = array();
             if (array_key_exists('subjectAltName', $client_cert_data['extensions'])){
                 if (is_string($client_cert_data['extensions']['subjectAltName']) && substr( $client_cert_data['extensions']['subjectAltName'], 0, 6 ) === "email:"){
                     $attributes['mail'][] = str_replace('email:','',$client_cert_data['extensions']['subjectAltName']);
