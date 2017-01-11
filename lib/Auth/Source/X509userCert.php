@@ -85,35 +85,35 @@ class sspmod_authX509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Sou
          * Load values from configuration or fallback to defaults
          *
          */
-        if (!array_key_exists('cert_name_attribute', $this->config)){
+        if (!array_key_exists('authX509toSAML:cert_name_attribute', $this->config)){
             $cert_name_attribute = 'CN';
         } else {
-            $cert_name_attribute = $this->config['cert_name_attribute'];
+            $cert_name_attribute = $this->config['authX509toSAML:cert_name_attribute'];
         }
-        if (!array_key_exists('assertion_name_attribute', $this->config)){
+        if (!array_key_exists('authX509toSAML:assertion_name_attribute', $this->config)){
             $assertion_name_attribute = 'displayName';
         } else {
-            $assertion_name_attribute = $this->config['assertion_name_attribute'];
+            $assertion_name_attribute = $this->config['authX509toSAML:assertion_name_attribute'];
         }
-        if (!array_key_exists('assertion_dn_attribute', $this->config)){
+        if (!array_key_exists('authX509toSAML:assertion_dn_attribute', $this->config)){
             $assertion_dn_attribute = 'distinguishedName';
         } else {
-            $assertion_dn_attribute = $this->config['assertion_dn_attribute'];
+            $assertion_dn_attribute = $this->config['authX509toSAML:assertion_dn_attribute'];
         }
-        if (!array_key_exists('assetion_assurance_attribute', $this->config)){
+        if (!array_key_exists('authX509toSAML:assetion_assurance_attribute', $this->config)){
             $assertion_assurance_attribute = 'eduPersonAssurance';
         } else {
-            $assertion_assurance_attribute = $this->config['assertion_assurance_attribute'];
+            $assertion_assurance_attribute = $this->config['authX509toSAML:assertion_assurance_attribute'];
         }
-        if (!array_key_exists('parse_san_emails', $this->config)){
+        if (!array_key_exists('authX509toSAML:parse_san_emails', $this->config)){
             $parse_san_emails = true;
         } else {
-            $parse_san_emails = $this->config['parse_san_emails'];
+            $parse_san_emails = $this->config['authX509toSAML:parse_san_emails'];
         }
-        if (!array_key_exists('parse_policy', $this->config)){
+        if (!array_key_exists('authX509toSAML:parse_policy', $this->config)){
             $parse_policy = true;
         } else {
-            $parse_policy = $this->config['parse_policy'];
+            $parse_policy = $this->config['authX509toSAML:parse_policy'];
         }
 
         // Get the subject of the certificate
@@ -123,7 +123,7 @@ class sspmod_authX509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Sou
         }
 
         if (array_key_exists($cert_name_attribute, $client_cert_data['subject'])){
-            if (array_key_exists('export_eppn', $this->config) && $this->config['export_eppn'] == true){
+            if (array_key_exists('authX509toSAML:export_eppn', $this->config) && $this->config['authX509toSAML:export_eppn'] == true){
                 $name_tokens = explode(" ", $client_cert_data['subject'][$cert_name_attribute]);
                 $eppn = '';
                 foreach ($name_tokens as $token){
