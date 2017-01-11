@@ -167,7 +167,7 @@ class sspmod_authX509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Sou
                 if (preg_match_all('/Policy: ([\d\.\d]+)/', $client_cert_data['extensions']['certificatePolicies'], $matches)) {
                     if (count($matches)>1){
                         foreach ($matches[1] as $policy){
-                            $attributes[$assertion_assurance_attribute] = $policy;
+                            $attributes[$assertion_assurance_attribute][] = $policy;
                         }
                     }
                 }
