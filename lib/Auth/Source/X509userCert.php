@@ -105,15 +105,15 @@ class sspmod_authX509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Sou
         } else {
             $assertion_assurance_attribute = $this->config['assertion_assurance_attribute'];
         }
-        if (!array_key_exists('parseSANemails', $this->config)){
-            $parseSANemails = true;
+        if (!array_key_exists('parse_san_emails', $this->config)){
+            $parse_san_emails = true;
         } else {
-            $parseSANemails = $this->config['parseSANemails'];
+            $parse_san_emails = $this->config['parse_san_emails'];
         }
-        if (!array_key_exists('parsePolicy', $this->config)){
-            $parsePolicy = true;
+        if (!array_key_exists('parse_policy', $this->config)){
+            $parse_policy = true;
         } else {
-            $parsePolicy = $this->config['parsePolicy'];
+            $parse_policy = $this->config['parse_policy'];
         }
 
         // Get the subject of the certificate
@@ -140,7 +140,7 @@ class sspmod_authX509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Sou
             }
         }
         // Attempt to parse Subject Alternate Names for email addresses
-        if ($parseSANemails){
+        if ($parse_san_emails){
             $attributes['mail'] = array();
             if (array_key_exists('subjectAltName', $client_cert_data['extensions'])){
                 if (is_string($client_cert_data['extensions']['subjectAltName']) && substr( $client_cert_data['extensions']['subjectAltName'], 0, 6 ) === "email:"){
@@ -156,7 +156,7 @@ class sspmod_authX509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Sou
             }
         }
         // Attempt to parse certificatePolicies extensions
-        if($parsePolicy){
+        if($parse_policy){
             if (!empty($client_cert_data['extensions']['certificatePolicies']) && is_string($client_cert_data['extensions']['certificatePolicies'])) {
                 $attributes[$assertion_assurance_attribute] = array();
                 if (preg_match_all('/Policy: ([\d\.\d]+)/', $client_cert_data['extensions']['certificatePolicies'], $matches)) {
