@@ -115,6 +115,11 @@ class sspmod_authX509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Sou
         } else {
             $parse_policy = $this->config['authX509toSAML:parse_policy'];
         }
+        if (!array_key_exists('authX509toSAML:export_eppn', $this->config)){
+            $export_eppn = true;
+        } else {
+            $export_eppn = $this->config['authX509toSAML:export_eppn'];
+        }
 
         // Get the subject of the certificate
         if (array_key_exists('name', $client_cert_data)){
@@ -123,7 +128,7 @@ class sspmod_authX509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Sou
         }
 
         if (array_key_exists($cert_name_attribute, $client_cert_data['subject'])){
-            if (array_key_exists('authX509toSAML:export_eppn', $this->config) && $this->config['authX509toSAML:export_eppn'] == true){
+            if ($export_eppn){
                 $name_tokens = explode(" ", $client_cert_data['subject'][$cert_name_attribute]);
                 $eppn = '';
                 foreach ($name_tokens as $token){
