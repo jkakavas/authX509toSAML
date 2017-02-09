@@ -17,11 +17,15 @@ stores it in the environment variable SSL_CLIENT_CERT. This can be achieved
 with such a configuration:
 
     SSLEngine on
+    # Configure the Server part of TLS
     SSLCertificateFile /etc/openssl/certs/server.crt
     SSLCertificateKeyFile /etc/openssl/private/server.key
     SSLCACertificateFile /etc/openssl/certs/ca.crt
+    # Configure Client certificate authentication
     SSLVerifyClient require
-    SSLVerifyDepth 2
+    SSLVerifyDepth 1
+    # Configure which CAs the server will trust for signing client certificates
+    SSLCACertificatePath "/usr/share/igtf-policy/classic"
     SSLOptions +ExportCertData
 
 Note that SSLVerifyClient can be set to optional if you want to support
@@ -30,14 +34,21 @@ set explicitly on
     <Location "/simplesaml/saml2/idp/SSOService.php">
 
 
+Install authX509toSAML module
+---------------------------------
+
+   git clone https://github.com/jkakavas/authX509toSAML.git
+   cp -r authX509toSAML /var/simplesamlphp/modules/
+
+
 Setting up the authX509toSAML module
 --------------------------------------
 
 The first thing you need to do is to enable the module:
 
-    touch modules/authX509toSAML/enable
+    touch /var/simplesamlphp/modules/authX509toSAML/enable
 
-Then you must add it as an authentication source. Here is an
+Then you must add it as an authentication source in /var/simplesamlphp/config/authsources.php . Here is an
 example authsources.php entry:
 
     'x509' => array(
