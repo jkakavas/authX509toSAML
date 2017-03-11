@@ -83,3 +83,39 @@ The configuration options are as following
                                  value from the certificate subject value (i.e. for Grid Robot certificates)
 
 All the above parameters are optional, since the code contains sane defaults for all of them (the values shown in the example above)
+
+Setting up attribute-based authorisation
+----------------------------------------
+
+You can use the [authorize](https://simplesamlphp.org/docs/stable/authorize:authorize)
+module in order to control access based on the attributes returned by the
+authX509toSAML module after certificate authentication.
+First, you need to make sure that the authorize module is enabled.
+The presence of the `default-enable` file indicates that the module is 
+enabled by default, so you should remove `disable` if present:
+```
+    rm /var/simplesamlphp/modules/authorize/disable
+```
+Then you must add the module as an authentication processing (authproc) filter,
+either in `config.php` or in `saml20-idp-hosted.php`. Here is an 
+example authproc configuration in `saml20-idp-hosted.php`:
+
+```
+    'authproc' => array(
+
+        92 => array(
+            'class' => 'authorize:Authorize',
+            'regex' => false,
+            'eduPersonAssurance' => array(
+                '1.2.840.113612.5.2.2.1',
+                '1.2.840.113612.5.2.2.5',
+            ),
+        ),
+
+    ),
+```
+
+The configuration above only allows access to certificates including either
+IGTF Classic (`1.2.840.113612.5.2.2.1`) or MICS (`1.2.840.113612.5.2.2.5`) in
+their policies (assuming the authX509toSAML module has been configured to map
+certificate policies to the eduPersonAssurance attribute).
