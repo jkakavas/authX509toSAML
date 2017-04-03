@@ -60,6 +60,7 @@ example authsources.php entry:
         'authX509toSAML:cert_name_attribute': 'CN',
         'authX509toSAML:assertion_name_attribute': 'displayName',
         'authX509toSAML:assertion_dn_attribute': 'distinguishedName',
+        'authX509toSAML:assertion_o_attribute': 'o',
         'authX509toSAML:assetion_assurance_attribute': 'eduPersonAssurance',
         'authX509toSAML:parse_san_emails': TRUE
         'authX509toSAML:parse_policy': TRUE,
@@ -74,8 +75,13 @@ The configuration options are as following
                                  of the certificate subject will be mapped to
 * assertion_dn_attribute         is the attribute in the SAML assertion where the DN of the
                                  certificate subject will be mapped to
+
+* assertion_o_attribute          is the attribute in the SAML assertion where the organisation name (if present) 
+                                 in the certificate subject will be mapped to. Defaults to `'o'`. If set to `null`, the module will not attempt to extract the value from the certificate subject.
+
 * assertion_dn_attribute         is the attribute in the SAML assertion where the certificatePolicy 
                                  attribute of the certificate will be mapped to
+
 * parse_san_emails               controls whether the module will attempt to parse Subject Alternate
                                  Names to find possible email addresses for the certificate subject
 * parse_policy                   controls whether the module will attempt to parse Certificate Policy

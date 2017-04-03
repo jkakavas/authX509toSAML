@@ -100,6 +100,11 @@ class sspmod_authX509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Sou
         } else {
             $assertion_dn_attribute = $this->config['authX509toSAML:assertion_dn_attribute'];
         }
+        if (!array_key_exists('authX509toSAML:assertion_o_attribute', $this->config)){
+            $assertion_o_attribute = 'o';
+        } elseif (!empty($this->config['authX509toSAML:assertion_o_attribute']) && is_string($this->config['authX509toSAML:assertion_o_attribute'])){
+            $assertion_o_attribute = $this->config['authX509toSAML:assertion_o_attribute'];
+        }
         if (!array_key_exists('authX509toSAML:assetion_assurance_attribute', $this->config)){
             $assertion_assurance_attribute = 'eduPersonAssurance';
         } else {
@@ -159,6 +164,10 @@ class sspmod_authX509toSAML_Auth_Source_X509userCert extends SimpleSAML_Auth_Sou
                     }
                 }
             }
+        }
+        // Attempt to parse organisation name from certificate subject
+        if (isset($assertion_o_attribute) && !empty($client_cert_data['subject']['O']) && is_string($client_cert_data['subject']['O'])){
+            $attributes[$assertion_o_attribute] = array($client_cert_data['subject']['O']);
         }
         // Attempt to parse certificatePolicies extensions
         if($parse_policy){
